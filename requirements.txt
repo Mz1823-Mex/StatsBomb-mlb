@@ -1,2 +1,31 @@
+# Core Data & ML
 pandas==2.2.3
+numpy==1.26.4
 scikit-learn==1.5.2
+scipy==1.14.0
+
+# Data Collection & HTTP
+requests==2.32.3
+aiohttp==3.9.5
+
+# Configuration & Utilities
+pyyaml==6.0.2
+python-dotenv==1.0.1
+tqdm==4.66.4
+
+# Logging & Validation
+python-json-logger==2.0.7
+pydantic==2.7.4
+
+# Development & Testing
+pytest==8.0.0
+pytest-cov==4.1.0
+black==24.3.0
+flake8==7.0.0
+mypy==1.11.0
+
+# Serialization
+pyarrow==16.1.0
+
+# Reproducibility & ML Utilities
+joblib==1.4.2
