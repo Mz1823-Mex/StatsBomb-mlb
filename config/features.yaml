@@ -1,0 +1,288 @@
+# MLB Sabermetric Features Configuration
+# Detailed definitions and computation parameters for all sabermetric features
+
+# ============================================================================
+# BATTING FEATURES
+# ============================================================================
+batting_features:
+  
+  # Basic Offensive Statistics
+  AVG:
+    name: "Batting Average"
+    formula: "hits / at_bats"
+    description: "Percentage of at-bats resulting in hits"
+    min_value: 0.0
+    max_value: 1.0
+    data_type: "float"
+    required_fields: ["hits", "at_bats"]
+    nan_handling: "forward_fill"
+  
+  OBP:
+    name: "On-Base Percentage"
+    formula: "(hits + walks + hit_by_pitch) / (at_bats + walks + hit_by_pitch + sacrifice_flies)"
+    description: "Percentage of plate appearances that result in reaching base"
+    min_value: 0.0
+    max_value: 1.0
+    data_type: "float"
+    required_fields: ["hits", "walks", "hit_by_pitch", "at_bats", "sacrifice_flies"]
+    nan_handling: "forward_fill"
+  
+  SLG:
+    name: "Slugging Percentage"
+    formula: "(singles + 2*doubles + 3*triples + 4*home_runs) / at_bats"
+    description: "Total bases per at-bat"
+    min_value: 0.0
+    max_value: 4.0
+    data_type: "float"
+    required_fields: ["hits", "doubles", "triples", "home_runs", "at_bats"]
+    nan_handling: "forward_fill"
+  
+  OPS:
+    name: "On-base Plus Slugging"
+    formula: "OBP + SLG"
+    description: "Combined on-base and slugging percentage"
+    min_value: 0.0
+    max_value: 5.0
+    data_type: "float"
+    required_fields: ["OBP", "SLG"]
+    nan_handling: "forward_fill"
+  
+  # Advanced Batting Metrics
+  ISO:
+    name: "Isolated Power"
+    formula: "SLG - AVG"
+    description: "Extra-base hit rate"
+    min_value: 0.0
+    max_value: 2.0
+    data_type: "float"
+    required_fields: ["SLG", "AVG"]
+    nan_handling: "forward_fill"
+  
+  BABIP:
+    name: "Batting Average on Balls In Play"
+    formula: "(hits - home_runs) / (at_bats - strikeouts - home_runs + sacrifice_flies)"
+    description: "Batting average excluding home runs and strikeouts"
+    min_value: 0.0
+    max_value: 1.0
+    data_type: "float"
+    required_fields: ["hits", "home_runs", "at_bats", "strikeouts", "sacrifice_flies"]
+    nan_handling: "forward_fill"
+  
+  wOBA:
+    name: "Weighted On-Base Average"
+    formula: "(0.69*walks + 0.72*hit_by_pitch + 0.89*singles + 1.24*doubles + 1.56*triples + 1.95*home_runs) / plate_appearances"
+    description: "Weighted OBP considering value of each outcome (2026 coefficients)"
+    min_value: 0.0
+    max_value: 2.0
+    data_type: "float"
+    required_fields: ["walks", "hit_by_pitch", "singles", "doubles", "triples", "home_runs", "plate_appearances"]
+    nan_handling: "forward_fill"
+    note: "Weights based on 2026 season run values; may vary by year"
+  
+  # Rate Statistics
+  strikeout_rate:
+    name: "Strikeout Rate"
+    formula: "strikeouts / plate_appearances"
+    description: "Percentage of plate appearances resulting in strikeouts"
+    min_value: 0.0
+    max_value: 1.0
+    data_type: "float"
+    required_fields: ["strikeouts", "plate_appearances"]
+    nan_handling: "forward_fill"
+  
+  walk_rate:
+    name: "Walk Rate"
+    formula: "walks / plate_appearances"
+    description: "Percentage of plate appearances resulting in walks"
+    min_value: 0.0
+    max_value: 0.3
+    data_type: "float"
+    required_fields: ["walks", "plate_appearances"]
+    nan_handling: "forward_fill"
+  
+  contact_rate:
+    name: "Contact Rate"
+    formula: "(plate_appearances - strikeouts) / plate_appearances"
+    description: "Percentage of pitches put in play"
+    min_value: 0.0
+    max_value: 1.0
+    data_type: "float"
+    required_fields: ["plate_appearances", "strikeouts"]
+    nan_handling: "forward_fill"
+
+# ============================================================================
+# PITCHING FEATURES
+# ============================================================================
+pitching_features:
+  
+  # Basic Pitching Statistics
+  ERA:
+    name: "Earned Run Average"
+    formula: "(earned_runs * 9) / innings_pitched"
+    description: "Average earned runs allowed per 9 innings pitched"
+    min_value: 0.0
+    max_value: 9.0
+    data_type: "float"
+    required_fields: ["earned_runs", "innings_pitched"]
+    nan_handling: "forward_fill"
+  
+  WHIP:
+    name: "Walks + Hits per Innings Pitched"
+    formula: "(walks + hits_allowed) / innings_pitched"
+    description: "Average baserunners allowed per inning"
+    min_value: 0.5
+    max_value: 3.0
+    data_type: "float"
+    required_fields: ["walks", "hits_allowed", "innings_pitched"]
+    nan_handling: "forward_fill"
+  
+  K9:
+    name: "Strikeouts per 9 Innings"
+    formula: "(strikeouts * 9) / innings_pitched"
+    description: "Average strikeouts per 9 innings pitched"
+    min_value: 0.0
+    max_value: 14.0
+    data_type: "float"
+    required_fields: ["strikeouts", "innings_pitched"]
+    nan_handling: "forward_fill"
+  
+  BB9:
+    name: "Walks per 9 Innings"
+    formula: "(walks * 9) / innings_pitched"
+    description: "Average walks per 9 innings pitched"
+    min_value: 0.0
+    max_value: 6.0
+    data_type: "float"
+    required_fields: ["walks", "innings_pitched"]
+    nan_handling: "forward_fill"
+  
+  # Advanced Pitching Metrics
+  FIP:
+    name: "Fielding Independent Pitching"
+    formula: "((13*home_runs + 3*walks - 2*strikeouts) / innings_pitched) + 3.10"
+    description: "ERA-like metric independent of defense (2026 constant)"
+    min_value: 0.0
+    max_value: 9.0
+    data_type: "float"
+    required_fields: ["home_runs", "walks", "strikeouts", "innings_pitched"]
+    nan_handling: "forward_fill"
+    note: "Constant 3.10 is 2026 MLB average; may vary"
+  
+  SIERA_approx:
+    name: "Simplified ERA Approximation"
+    formula: "(3.20 - (strikeouts/innings_pitched)*1.15 + (walks/innings_pitched)*3.2 + (home_runs/innings_pitched)*13)"
+    description: "Simplified version of ERA independent of defense"
+    min_value: 0.0
+    max_value: 9.0
+    data_type: "float"
+    required_fields: ["strikeouts", "walks", "home_runs", "innings_pitched"]
+    nan_handling: "forward_fill"
+  
+  LOB_percent:
+    name: "Left On Base Percentage"
+    formula: "(hits_allowed + walks - runs_allowed) / (hits_allowed + walks - 1.4*home_runs)"
+    description: "Percentage of runners left on base (sequencing luck indicator)"
+    min_value: 0.0
+    max_value: 1.0
+    data_type: "float"
+    required_fields: ["hits_allowed", "walks", "runs_allowed", "home_runs"]
+    nan_handling: "forward_fill"
+
+# ============================================================================
+# TEMPORAL FEATURES
+# ============================================================================
+temporal_features:
+  
+  rolling_means:
+    windows: [7, 15, 30]
+    description: "Rolling average of performance metrics over N games"
+    apply_to:
+      batting: ["AVG", "OBP", "SLG", "OPS"]
+      pitching: ["ERA", "WHIP", "K9"]
+  
+  lag_features:
+    periods: [1, 3, 7]
+    description: "Performance from N games ago"
+    apply_to:
+      batting: ["AVG", "OBP", "OPS", "strikeout_rate"]
+      pitching: ["ERA", "WHIP"]
+  
+  cumulative_season:
+    description: "Season-to-date cumulative statistics"
+    apply_to:
+      batting: ["hits", "home_runs", "rbis", "stolen_bases"]
+      pitching: ["wins", "losses", "saves", "innings_pitched"]
+
+# ============================================================================
+# AGGREGATE FEATURES
+# ============================================================================
+aggregate_features:
+  
+  player_level:
+    description: "Player career and season aggregates"
+    metrics:
+      - total_games
+      - total_at_bats
+      - career_avg
+      - season_to_date_avg
+  
+  team_level:
+    description: "Team aggregates for contextual features"
+    metrics:
+      - team_avg_runs_per_game
+      - team_avg_runs_allowed_per_game
+      - team_win_pct
+      - team_strength_of_schedule
+  
+  position_level:
+    description: "Position-based benchmarks"
+    metrics:
+      - position_avg_ops
+      - position_avg_era
+      - position_median_salary
+
+# ============================================================================
+# FEATURE ENGINEERING PARAMETERS
+# ============================================================================
+engineering_params:
+  
+  # Missing value handling
+  missing_value_strategy:
+    default: "forward_fill"  # forward_fill, backward_fill, mean, median, zero
+    by_column:
+      # For batting stats from players without recent activity
+      strikeouts: "zero"
+      home_runs: "zero"
+      rbis: "zero"
+      # For pitching stats from non-pitchers
+      earned_runs: "zero"
+      innings_pitched: "zero"
+  
+  # Outlier handling
+  outlier_handling:
+    enabled: true
+    method: "iqr"  # iqr, zscore
+    threshold: 3.0
+    action: "cap"  # cap, remove
+  
+  # Normalization (for ML models)
+  normalization:
+    method: "standardize"  # standardize, minmax, robust
+    apply_before_model: true
+
+# ============================================================================
+# QUALITY CONTROL
+# ============================================================================
+quality_control:
+  
+  feature_validation:
+    check_range: true
+    check_nan_percent:
+      threshold: 30
+    check_duplicate_values: true
+  
+  statistical_checks:
+    compute_correlations: true
+    correlation_threshold: 0.95  # Flag highly correlated features
+    compute_variance: true
+    variance_threshold: 0.01  # Flag near-zero variance features
