@@ -1,0 +1,63 @@
+name: Train ML Model
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+    paths:
+      - "src/**"
+      - "data/**"
+      - "requirements.txt"
+      - ".github/workflows/train.yml"
+  schedule:
+    - cron: "0 6 * * 1"
+
+jobs:
+  train:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Training
+        run: |
+          python src/train.py
+
+      - name: Upload Metrics And Model
+        uses: actions/upload-artifact@v4
+        with:
+          name: ml-training-artifacts
+          path: outputs/
+# src/train.py
+import json
+import os
+import pandas as pd
+from sklearn.compose import ColumnTransformer
+from sklearn.impute import SimpleImputer
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, roc_auc_score
+from sklearn.ensemble import RandomForestClassifier
+
+DATA_PATH = "data/raw/telecom_churn_sample.csv"
+OUT_DIR = "outputs"
+MODEL_INFO_PATH = os.path.join(OUT_DIR, "model_metrics.json")
+
+os.makedirs(OUT_DIR, exist_ok=True)
+
+df = pd.read_csv(DATA_PATH)
+
+# Validación mínima
