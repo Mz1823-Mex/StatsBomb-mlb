@@ -30,17 +30,3 @@ jobs:
         with:
           name: mlb-espn-data
           path: data/processed/
-Limitaciones Prácticas
-El scraping de múltiples sitios se vuelve más difícil cuando hay integración entre fuentes, contenido dinámico o cambios frecuentes de interfaz, así que ESPN será más frágil que una API estable 
-Tacuri
-2025
-A
-2025
-. También conviene publicar método y código de extracción, porque la falta de transparencia en scraping reduce la replicabilidad 
-Pinkoski
-2025
-Abhishek
-2024
-.
-
-Si quieres, el siguiente paso puede ser generar la versión completa del repositorio con requirements.txt
