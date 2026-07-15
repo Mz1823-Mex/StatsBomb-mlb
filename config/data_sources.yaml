@@ -1,0 +1,302 @@
+# MLB Data Sources Configuration
+# Defines all data sources, endpoints, and collection parameters
+
+# ============================================================================
+# PRIMARY DATA SOURCES
+# ============================================================================
+data_sources:
+  
+  # MLB Official Stats API
+  mlb_stats_api:
+    name: "MLB Stats API"
+    base_url: "https://statsapi.mlb.com/api/v1"
+    description: "Official MLB Statistics API - primary source for 2026 season data"
+    available_endpoints:
+      - people           # Player information
+      - teams            # Team information
+      - standings        # Season standings
+      - games            # Game results and box scores
+      - stats            # Player statistics
+      - schedules        # Game schedules
+    
+    endpoints:
+      people:
+        url: "/people"
+        params:
+          season: 2026
+        rate_limit: "no limit"
+        description: "Player biographical and career information"
+      
+      player_stats:
+        url: "/people/{playerId}/stat"
+        params:
+          group: ["hitting", "pitching", "fielding"]
+          type: "season"
+          season: 2026
+        rate_limit: "100 requests per minute"
+        description: "Individual player statistics by type"
+      
+      team_stats:
+        url: "/teams/{teamId}/stat"
+        params:
+          type: "season"
+          season: 2026
+        rate_limit: "100 requests per minute"
+        description: "Team aggregate statistics"
+      
+      games:
+        url: "/games"
+        params:
+          sportId: 1  # MLB
+          season: 2026
+        rate_limit: "100 requests per minute"
+        description: "Game results including box scores"
+      
+      standings:
+        url: "/standings"
+        params:
+          leagueId: "103,104"  # AL and NL
+          season: 2026
+        rate_limit: "no limit"
+        description: "Season standings and records"
+
+# ============================================================================
+# DATA COLLECTION PARAMETERS
+# ============================================================================
+collection:
+  
+  # Timeout and retry configuration
+  requests:
+    timeout: 30  # seconds
+    max_retries: 3
+    retry_delay: 2  # seconds
+    backoff_factor: 2
+  
+  # Batch processing
+  batching:
+    enabled: true
+    batch_size: 100
+    delay_between_batches: 1  # seconds
+  
+  # Rate limiting
+  rate_limiting:
+    enabled: true
+    requests_per_second: 10
+    burst_size: 20
+
+# ============================================================================
+# REQUIRED FIELDS BY DATA TYPE
+# ============================================================================
+required_fields:
+  
+  batting_stats:
+    primary_keys: ["playerId", "season", "date"]
+    required:
+      - playerId
+      - playerName
+      - season
+      - date
+      - teamId
+      - teamName
+      - position
+      - gamesPlayed
+      - plateAppearances
+      - atBats
+      - hits
+      - doubles
+      - triples
+      - homeRuns
+      - rbi
+      - walks
+      - strikeOuts
+      - hitByPitch
+      - stolenBases
+      - caughtStealing
+    optional:
+      - sacrificeBunts
+      - sacrificeFlies
+      - groundIntoDoublePlay
+      - intentionalWalks
+  
+  pitching_stats:
+    primary_keys: ["playerId", "season", "date"]
+    required:
+      - playerId
+      - playerName
+      - season
+      - date
+      - teamId
+      - teamName
+      - gamesPlayed
+      - gamesStarted
+      - innings
+      - earnedRuns
+      - hitsAllowed
+      - homeRunsAllowed
+      - battersFaced
+      - walks
+      - strikeOuts
+      - wins
+      - losses
+      - saves
+    optional:
+      - completeGames
+      - shutouts
+      - holds
+      - quality_starts
+      - groundBallFlyBallRatio
+  
+  game_results:
+    primary_keys: ["gameId", "date"]
+    required:
+      - gameId
+      - date
+      - season
+      - homeTeamId
+      - homeTeamName
+      - awayTeamId
+      - awayTeamName
+      - homeScore
+      - awayScore
+      - winner
+      - gameType
+    optional:
+      - venue
+      - weather
+      - attendance
+      - duration
+
+# ============================================================================
+# DATA VALIDATION RULES
+# ============================================================================
+validation:
+  
+  # Schema validation
+  schema:
+    check_column_types: true
+    check_required_columns: true
+    check_for_duplicates: true
+    
+  # Value validation
+  value_ranges:
+    avg: {min: 0.0, max: 1.0}
+    obp: {min: 0.0, max: 1.0}
+    slg: {min: 0.0, max: 4.0}
+    ops: {min: 0.0, max: 5.0}
+    era: {min: 0.0, max: 15.0}
+    whip: {min: 0.0, max: 5.0}
+    strikeout_rate: {min: 0.0, max: 1.0}
+  
+  # Consistency checks
+  consistency:
+    hits_lte_at_bats: true
+    home_runs_lte_hits: true
+    walks_plus_hits_lte_plate_appearances: true
+    runs_scored_lte_games: true
+  
+  # Missing value thresholds
+  missing_values:
+    max_percent_per_column: 30
+    max_percent_entire_dataset: 20
+    critical_columns: ["playerId", "season", "date"]  # Must have 0% missing
+
+# ============================================================================
+# DATA CLEANING RULES
+# ============================================================================
+cleaning:
+  
+  # Duplicate handling
+  duplicates:
+    strategy: "keep_first"  # keep_first, keep_last, raise_error
+    subset: ["playerId", "season", "date"]
+  
+  # Missing value handling
+  missing_values:
+    strategy: "context_dependent"  # forward_fill, backward_fill, mean, zero, drop_row
+    by_column:
+      # Most stats should be zero if missing (no games played)
+      home_runs: "zero"
+      rbis: "zero"
+      walks: "zero"
+      strikeouts: "zero"
+      earned_runs: "zero"
+      # These should be forward filled (maintain last known value)
+      player_name: "forward_fill"
+      team_id: "forward_fill"
+      position: "forward_fill"
+  
+  # Type conversion
+  type_conversion:
+    numeric_fields:
+      - gamesPlayed
+      - plateAppearances
+      - atBats
+      - hits
+      - home_runs
+    date_fields:
+      - date
+      - gameDate
+  
+  # Outlier handling
+  outliers:
+    detect: true
+    method: "iqr"  # iqr, zscore
+    threshold: 3.0
+    action: "cap"  # cap, remove, flag
+    apply_to:
+      - home_runs
+      - strikeouts
+      - era
+
+# ============================================================================
+# FALLBACK SOURCES (when API is unavailable)
+# ============================================================================
+fallback_sources:
+  
+  baseball_reference:
+    name: "Baseball Reference"
+    url: "https://www.baseball-reference.com"
+    description: "Fallback source for historical and 2026 season data"
+    status: "ready"
+    note: "Use for missing API data or validation"
+  
+  fangraphs:
+    name: "Fangraphs"
+    url: "https://www.fangraphs.com"
+    description: "Advanced sabermetric metrics"
+    status: "ready"
+    note: "Use for advanced FIP, xwOBA calculations"
+
+# ============================================================================
+# DATA RETENTION & VERSIONING
+# ============================================================================
+versioning:
+  
+  # Keep multiple versions of raw data
+  keep_raw_history: true
+  raw_history_dir: "data/raw/history"
+  
+  # Archive processed data
+  archive_processed: true
+  archive_dir: "data/archive"
+  
+  # Data quality snapshots
+  snapshot_dir: "data/snapshots"
+  snapshot_frequency: "daily"
+
+# ============================================================================
+# LOGGING & MONITORING
+# ============================================================================
+monitoring:
+  
+  # API call logging
+  log_api_calls: true
+  log_dir: "logs/api"
+  
+  # Data quality reports
+  generate_quality_reports: true
+  report_dir: "outputs/quality_reports"
+  
+  # Performance metrics
+  track_extraction_time: true
+  track_data_volume: true
