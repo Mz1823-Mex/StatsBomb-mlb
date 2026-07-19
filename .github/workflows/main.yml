@@ -1,0 +1,35 @@
+name: Actualizar y mejorar repositorio
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  actualizar-repositorio:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Instalar dependencias
+        run: |
+          pip install -r requirements.txt
+
+      - name: Actualizar datos
+        run: |
+          python scripts/actualizar_datos.py
+
+      - name: Mejorar código
+        run: |
+          python scripts/mejorar_codigo.py
+
+      - name: Commit y push cambios
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config --global user.name 'Mz1823-Mex'
+          git config --global user.email 'mz1823-mex@email.com'
+          git add .
+          git commit -m "Actualización y mejora del repositorio"
+          git push origin main
